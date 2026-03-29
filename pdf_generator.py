@@ -207,7 +207,7 @@ def generate_pdf(feedback_data, output_path):
         ax.legend(loc='lower right')
         ax.grid(True, alpha=0.5)
         plt.tight_layout()
-        line_path = os.path.join(os.path.dirname(__file__), "tmp_line_chart.png")
+        line_path = os.path.join('/tmp', "tmp_line_chart.png")
         plt.savefig(line_path)
         plt.close()
 
@@ -251,7 +251,7 @@ def generate_pdf(feedback_data, output_path):
         ax.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1))
         
         plt.tight_layout()
-        radar_path = os.path.join(os.path.dirname(__file__), "tmp_radar_chart.png")
+        radar_path = os.path.join('/tmp', "tmp_radar_chart.png")
         plt.savefig(radar_path)
         plt.close()
 
