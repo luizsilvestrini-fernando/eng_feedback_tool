@@ -8,30 +8,36 @@ O sistema é construído com uma base leve e robusta, focando em portabilidade e
 
 ```mermaid
 graph TD
-    subgraph Frontend
+    subgraph Cliente_Navegador [Camada de Cliente - Browser]
         Web[Interface Web: HTML5, CSS3, JS Vanilla]
         UI[Componentes: Matriz, Dashboard, Histórico]
     end
 
-    subgraph Backend_Flask
-        API[Flask App]
+    subgraph Servidor_Aplicacao [Camada de Infraestrutura - Servidor Python]
+        OS[SO: Linux/macOS/Windows - Agnostic]
+        Python[Runtime: Python 3.9+]
+        API[Flask App - WSGI]
         Auth[Gestão de Sessão & RBAC]
         PDF[PDF Generator: fpdf2]
         Charts[Matplotlib Charts]
     end
 
-    subgraph Persistencia
-        DB[(SQLite: feedbacks.db)]
+    subgraph Persistencia_Dados [Camada de Dados]
+        DB[(Local File: feedbacks.db - SQLite3)]
     end
 
-    subgraph Servicos_Externos
-        SMTP[Servidor SMTP: Gmail-SSL]
+    subgraph Servicos_Externos [Serviços e Comunicação]
+        SMTP[Google SMTP / Relay Service - Port 465 SSL]
+        DotEnv[.env Configs: SMTP_USER, SMTP_PASS, SECRET_KEY]
     end
 
-    Web -->|Fecth API| API
-    API -->|Query| DB
-    API -->|Render| PDF
-    PDF -->|Attach| SMTP
+    Web -->|Fecth API / HTTP| API
+    API -->|Read/Write IO| DB
+    API -->|PDF Generation| PDF
+    PDF -->|Attach/Send| SMTP
+    API -->|Load Config| DotEnv
+    OS --> Python
+    Python --> API
 ```
 
 ---
