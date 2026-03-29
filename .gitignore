@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Database
+feedbacks.db
+
+# PDF & Temporários
+feedback_*.pdf
+temp_dl_*.pdf
+tmp_*.png
+tmp_*.jpg
+
+# OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log

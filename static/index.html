@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ótmow | Avaliação de Engenheiros</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     LOGIN OVERLAY
+══════════════════════════════════════════════════════ -->
+<div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+        <div class="login-logo">
+            <img src="https://otmow.com/wp-content/uploads/2025/10/logo-1.png" alt="Ótmow">
+        </div>
+        <h2 class="login-title">Bem-vindo ao Sistema de Feedback</h2>
+
+        <!-- Painel: Login normal -->
+        <div id="login-panel">
+            <p class="login-subtitle">Entre com seu e-mail corporativo</p>
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="login-email" placeholder="seu@otmow.com" autocomplete="email">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="login-password" placeholder="Sua senha" autocomplete="current-password">
+            </div>
+            <div id="login-error" class="auth-msg error" style="display:none;"></div>
+            <button class="btn-primary btn-auth" id="btn-login" onclick="doLogin()">Entrar</button>
+            <p class="login-link" onclick="switchToCodePanel()">Primeiro acesso ou esqueci minha senha →</p>
+        </div>
+
+        <!-- Painel: Verificação por código -->
+        <div id="code-panel" style="display:none;">
+            <p class="login-subtitle">Enviaremos um código de 6 dígitos para o seu e-mail</p>
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="code-email" placeholder="seu@otmow.com">
+            </div>
+            <button class="btn-secondary btn-auth-sm" id="btn-send-code" onclick="doRequestCode()">Enviar Código</button>
+
+            <div id="code-fields" style="display:none; margin-top: 1.5rem;">
+                <div class="input-group">
+                    <label>Código recebido (6 dígitos)</label>
+                    <input type="text" id="code-input" placeholder="123456" maxlength="6" style="letter-spacing: 0.3rem; font-size: 1.4rem; text-align: center;">
+                </div>
+                <div class="input-group">
+                    <label>Nova Senha (mín. 6 caracteres)</label>
+                    <input type="password" id="code-new-password" placeholder="Crie sua senha">
+                </div>
+                <button class="btn-primary btn-auth" onclick="doVerifyAndSetPassword()">Verificar e Definir Senha</button>
+            </div>
+
+            <div id="code-error" class="auth-msg error" style="display:none;"></div>
+            <div id="code-success" class="auth-msg success" style="display:none;"></div>
+            <p class="login-link" onclick="switchToLoginPanel()">← Voltar para login</p>
+        </div>
+
+        <!-- Timer de sessão -->
+        <div id="session-timer-bar" class="session-timer-bar" style="display:none;">
+            <span id="session-timer-text">Sessão expira em 5:00</span>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     APP PRINCIPAL
+══════════════════════════════════════════════════════ -->
+<div id="app-container" style="display:none;">
+
+    <div class="topbar">
+        <div class="logo">
+            <img src="https://otmow.com/wp-content/uploads/2025/10/logo-1.png" alt="Otmow Logo">
+        </div>
+        <ul class="nav" id="main-nav">
+            <li class="active" id="nav-new" onclick="showTab('new')">Novo Feedback</li>
+            <li id="nav-history" onclick="showTab('history')">Histórico</li>
+            <li id="nav-dashboard" onclick="showTab('dashboard')">Dashboard Evolutivo</li>
+            <li id="nav-users" style="display:none;" onclick="showTab('users')">Usuários</li>
+            <li id="nav-matrix" style="display:none;" onclick="showTab('matrix')">Matriz de Competência</li>
+        </ul>
+        <div class="user-info-bar">
+            <span id="topbar-role-badge" class="role-badge"></span>
+            <span id="topbar-email"></span>
+            <button class="btn-logout" onclick="doLogout()">Sair</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+
+        <!-- ── Tab: Novo Feedback ── -->
+        <div id="tab-new" class="tab-pane active">
+            <div class="header">
+                <h1>Avaliação Contínua de Performance</h1>
+                <p>Módulo Oficial de Feedback - Engenharia de Software</p>
+            </div>
+
+            <form id="feedbackForm" class="form-container">
+                <div class="card">
+                    <h3>Identificação</h3>
+                    <div class="input-group">
+                        <label>Nome do Avaliado (Engenheiro)</label>
+                        <input type="text" id="engineer_name" required placeholder="Ex: João da Silva">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group" style="flex: 1;">
+                            <label>E-mail Principal</label>
+                            <input type="email" id="engineer_email" required placeholder="Ex: joao@otmow.com">
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label>E-mail em Cópia (CC)</label>
+                            <input type="email" id="cc_email" placeholder="Ex: manager@otmow.com">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Nome do Líder (Avaliador)</label>
+                        <input type="text" id="evaluator_name" required placeholder="Ex: Gestor Responsável">
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>1. Execução e Impacto</h3>
+                    <div class="slider-group readonly-slider">
+                        <label>Nota Geral de Execução (Média Automática)</label>
+                        <div class="slider-wrapper">
+                            <span class="slider-val" id="val-exec-avg">0</span>
+                            <input type="range" id="execution_score" min="0" max="10" value="0" step="0.1" disabled>
+                        </div>
+                        <p class="small-info">Esta nota é calculada automaticamente com base nas entregas abaixo.</p>
+                    </div>
+
+                    <div id="execution-blocks-container"></div>
+                    <button type="button" class="btn-secondary" onclick="addExecutionBlock()">+ Adicionar Nova Unidade de Execução</button>
+                    <input type="hidden" id="execution_text">
+                </div>
+
+                <div class="card">
+                    <h3>2. Comunicação e Trabalho em Equipe</h3>
+                    <div class="slider-group">
+                        <label>Nota Geral de Comunicação (1 a 10)</label>
+                        <div class="slider-wrapper">
+                            <span class="slider-val" id="val-comm">5</span>
+                            <input type="range" id="communication_score" min="1" max="10" value="5" oninput="document.getElementById('val-comm').innerText=this.value">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Evolução da Comunicação no Período</label>
+                        <textarea id="communication_text" rows="4" placeholder="Como tem evoluído a comunicação (pareamentos, feedbacks, etc)..."></textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>3. Alinhamentos Finais e Crescimento</h3>
+
+                    <div class="rating-box">
+                        <div class="input-group">
+                            <label>Pontos a Desenvolver (Opportunities)</label>
+                            <textarea id="dev_text" rows="2"></textarea>
+                        </div>
+                        <div class="slider-group mini-slider">
+                            <label>Grau (1 a 5): <span id="val-dev">3</span></label>
+                            <input type="range" id="dev_score" min="1" max="5" value="3" oninput="document.getElementById('val-dev').innerText=this.value">
+                        </div>
+                    </div>
+
+                    <div class="rating-box">
+                        <div class="input-group">
+                            <label>Pontos a Manter (Fortalezas)</label>
+                            <textarea id="maintain_text" rows="2"></textarea>
+                        </div>
+                        <div class="slider-group mini-slider">
+                            <label>Grau (1 a 5): <span id="val-maintain">3</span></label>
+                            <input type="range" id="maintain_score" min="1" max="5" value="3" oninput="document.getElementById('val-maintain').innerText=this.value">
+                        </div>
+                    </div>
+
+                    <div class="rating-box">
+                        <div class="input-group">
+                            <label>Checklist de Atividades em Andamento</label>
+                            <textarea id="checklist_text" rows="2"></textarea>
+                        </div>
+                        <div class="slider-group mini-slider">
+                            <label>Grau (1 a 5): <span id="val-checklist">3</span></label>
+                            <input type="range" id="checklist_score" min="1" max="5" value="3" oninput="document.getElementById('val-checklist').innerText=this.value">
+                        </div>
+                    </div>
+
+                    <div class="rating-box">
+                        <div class="input-group">
+                            <label>Dicas de Estudo e Leitura</label>
+                            <textarea id="study_text" rows="2"></textarea>
+                        </div>
+                        <div class="slider-group mini-slider">
+                            <label>Grau (1 a 5): <span id="val-study">3</span></label>
+                            <input type="range" id="study_score" min="1" max="5" value="3" oninput="document.getElementById('val-study').innerText=this.value">
+                        </div>
+                    </div>
+
+                    <div class="rating-box">
+                        <div class="input-group">
+                            <label>Sentimento de Dono (Ownership)</label>
+                            <textarea id="ownership_text" rows="2"></textarea>
+                        </div>
+                        <div class="slider-group mini-slider">
+                            <label>Grau (1 a 5): <span id="val-ownership">3</span></label>
+                            <input type="range" id="ownership_score" min="1" max="5" value="3" oninput="document.getElementById('val-ownership').innerText=this.value">
+                        </div>
+                    </div>
+
+                    <div class="rating-box">
+                        <div class="input-group">
+                            <label>Alinhamento Cultural (Cultural Fit)</label>
+                            <textarea id="cultural_text" rows="2"></textarea>
+                        </div>
+                        <div class="slider-group mini-slider">
+                            <label>Grau (1 a 5): <span id="val-cultural">3</span></label>
+                            <input type="range" id="cultural_score" min="1" max="5" value="3" oninput="document.getElementById('val-cultural').innerText=this.value">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="btnSubmit">Salvar Feedback</button>
+                <div id="submit-status" class="status-msg"></div>
+            </form>
+        </div>
+
+        <!-- ── Tab: Histórico ── -->
+        <div id="tab-history" class="tab-pane">
+            <div class="header">
+                <h1>Histórico de Feedbacks</h1>
+                <p>Acesse ou remova os registros de avaliações enviadas</p>
+            </div>
+            <div class="card history-filters" style="margin-bottom: 2rem;">
+                <div class="input-row">
+                    <div class="input-group" style="flex: 2;">
+                        <label>Filtrar por Avaliado</label>
+                        <input type="text" id="filter-name" placeholder="Digite o nome..." oninput="filterHistory()">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Filtrar por Data</label>
+                        <input type="date" id="filter-date" oninput="filterHistory()">
+                    </div>
+                    <div class="input-group" style="display: flex; align-items: flex-end; margin-bottom: 1.5rem;">
+                        <button class="btn-secondary" onclick="clearFilters()" style="margin-bottom: 0; padding: 0.7rem;">Limpar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Avaliado</th>
+                            <th>Líder</th>
+                            <th>Status E-mail</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── Tab: Dashboard ── -->
+        <div id="tab-dashboard" class="tab-pane">
+            <div class="header">
+                <h1>Dashboard Gerencial e Evolutivo</h1>
+                <p>Analise a performance individual e a saúde técnica do time.</p>
+            </div>
+
+            <div class="dashboard-nav">
+                <button class="dash-nav-btn active" onclick="switchDashboardView('team')">Visão do Time (Gestor)</button>
+                <button class="dash-nav-btn" onclick="switchDashboardView('individual')">Evolução por Engenheiro</button>
+            </div>
+
+            <div id="dash-view-team" class="dash-section">
+                <div class="dashboard-grid">
+                    <div class="card chart-box">
+                        <h3>Média de Competências da Equipe (Radar Global)</h3>
+                        <canvas id="teamRadarChart"></canvas>
+                    </div>
+                    <div class="card chart-box">
+                        <h3>Volume de Entregas Mensal (Throughput)</h3>
+                        <canvas id="throughputChart"></canvas>
+                    </div>
+                    <div class="card chart-box">
+                        <h3>Compliance de Feedback (E-mails Enviados)</h3>
+                        <div style="max-width: 260px; margin: 0 auto;">
+                            <canvas id="complianceChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card chart-box">
+                        <h3>Matriz Nota vs Entregas (Scatter)</h3>
+                        <canvas id="impactScatterChart"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-box" style="margin-top: 2rem;">
+                    <h3>Ranking de Evolução (Top Movers)</h3>
+                    <div class="leaderboard-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Engenheiro</th>
+                                    <th>Nota Composta</th>
+                                    <th>Evolução (Trend)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dash-view-individual" class="dash-section" style="display: none;">
+                <div class="card">
+                    <div class="input-group">
+                        <label>Selecione o Engenheiro para Análise Detalhada</label>
+                        <select id="engSelect" onchange="renderIndividualCharts()">
+                            <option value="">(Escolha um membro do time)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="chartWrapper" style="display:none; margin-top: 2rem;">
+                    <div class="card chart-box">
+                        <h3>Evolução de Performance (Histórico de Notas)</h3>
+                        <canvas id="lineChart" height="180"></canvas>
+                    </div>
+                    <div class="card chart-box" style="margin-top: 2rem;">
+                        <h3>Radar Comparativo (Última vs Anterior)</h3>
+                        <div style="max-width: 500px; margin: 0 auto;">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Tab: Usuários ── -->
+        <div id="tab-users" class="tab-pane">
+            <div class="header">
+                <h1>Gerenciamento de Usuários</h1>
+                <p>Cadastre membros do time e defina papéis de acesso</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3>Adicionar Novo Usuário</h3>
+                <div class="input-row" style="align-items: flex-end; gap: 1rem;">
+                    <div class="input-group" style="flex: 2; margin-bottom: 0;">
+                        <label>E-mail (@otmow.com)</label>
+                        <input type="email" id="new-user-email" placeholder="joao@otmow.com">
+                    </div>
+                    <div class="input-group" style="flex: 1; margin-bottom: 0;">
+                        <label>Papel</label>
+                        <select id="new-user-role">
+                            <option value="user">Engenheiro (user)</option>
+                            <option value="gestor">Gestor</option>
+                            <option value="admin" id="admin-role-option">Admin</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 0;">
+                        <button class="btn-primary" style="padding: 0.85rem 1.5rem; border-radius: 8px; font-size: 0.95rem;" onclick="createUser()">Adicionar</button>
+                    </div>
+                </div>
+                <div id="user-form-msg" class="auth-msg" style="display:none; margin-top: 1rem;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Usuários Cadastrados</h3>
+                <table class="data-table" id="users-table">
+                    <thead>
+                        <tr>
+                            <th>E-mail</th>
+                            <th>Papel</th>
+                            <th>Senha</th>
+                            <th>Desde</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <tr><td colspan="5">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /main-content -->
+</div><!-- /app-container -->
+
+        <!-- ── Tab: Matriz de Competência ── -->
+        <div id="tab-matrix" class="tab-pane">
+            <div class="header">
+                <h1>Matriz de Competência Técnica</h1>
+                <p id="matrix-cycle-label">Carregando ciclo...</p>
+            </div>
+
+            <!-- Barra de ações (Admin/Gestor) -->
+            <div id="matrix-admin-bar" class="matrix-admin-bar" style="display:none;">
+                <div class="matrix-admin-actions">
+                    <button class="btn-secondary" onclick="openNewCycleModal()">+ Novo Ciclo</button>
+                    <button class="btn-secondary" onclick="openAddCompetencyModal()">+ Adicionar Competência</button>
+                    <button class="btn-secondary" onclick="seedFromExcel()">⬆ Importar Excel</button>
+                    <button id="btn-delete-cycle" class="btn-danger-small" onclick="deleteSelectedCycle()" style="display:none; background: #fee2e2; color: #dc2626; border-color: #fecaca;">🗑 Excluir Ciclo</button>
+                    <button id="btn-reset-matrix" class="btn-danger-small" onclick="resetMatrixHistory()" style="display:none;">🗑 Limpar Histórico</button>
+                </div>
+                <div class="matrix-cycle-selector">
+                    <label for="matrix-cycle-select">Histórico de Ciclos:</label>
+                    <select id="matrix-cycle-select" onchange="loadMatrix(this.value)">
+                        <option value="">Carregando ciclos...</option>
+                    </select>
+                </div>
+                <div class="matrix-legend">
+                    <span class="heat-green-label">≥ Target</span>
+                    <span class="heat-yellow-label">≥ Target −0.5</span>
+                    <span class="heat-red-label">&lt; Target −0.5</span>
+                    <span class="heat-none-label">Sem dados</span>
+                </div>
+            </div>
+
+            <!-- Escala de Referência (sempre visível) -->
+            <div class="card matrix-scale-card">
+                <div class="scale-items">
+                    <div class="scale-item"><span class="scale-badge s3">3</span> Domina e pode ensinar outros</div>
+                    <div class="scale-item"><span class="scale-badge s2">2</span> Executa, mas sem domínio completo</div>
+                    <div class="scale-item"><span class="scale-badge s1">1</span> Pouca experiência, não domina</div>
+                    <div class="scale-item"><span class="scale-badge s0">0</span> Não conhece / sem interação</div>
+                </div>
+            </div>
+
+            <!-- Visão Admin/Gestor: tabela completa com heatmap -->
+            <div id="matrix-priv-view" style="display:none;">
+                <div class="card matrix-table-card" style="overflow-x:auto;">
+                    <table class="matrix-table" id="matrix-full-table">
+                        <thead id="matrix-full-thead"></thead>
+                        <tbody id="matrix-full-tbody"></tbody>
+                    </table>
+                    <div id="matrix-empty-state" class="empty-state" style="display:none;">
+                        Nenhuma competência cadastrada. Importe o Excel ou adicione manualmente.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visão Engenheiro: formulário de autoavaliação -->
+            <div id="matrix-user-view" style="display:none;">
+                <div id="matrix-submitted-banner" class="matrix-submitted-banner" style="display:none;">
+                    Sua avaliação foi submetida para este ciclo. Aguarde o próximo ciclo para uma nova rodada.
+                </div>
+                <div class="card matrix-table-card" style="overflow-x:auto;">
+                    <table class="matrix-table" id="matrix-user-table">
+                        <thead>
+                            <tr>
+                                <th style="min-width:160px;">Categoria</th>
+                                <th style="min-width:280px;">Competência</th>
+                                <th style="text-align:center;">Docs</th>
+                                <th style="min-width:240px; text-align:center;">Minha Avaliação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrix-user-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="matrix-user-actions" class="matrix-user-actions">
+                    <button class="btn-secondary" id="btn-save-draft" onclick="saveMatrixDraft()">Salvar Rascunho</button>
+                    <button class="btn-primary"   id="btn-submit-matrix" onclick="submitMatrix()" style="max-width:240px;">Submeter Avaliação</button>
+                    <div id="matrix-save-msg" class="status-msg" style="margin-top:0.5rem;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /main-content -->
+</div><!-- /app-container -->
+
+<!-- Modal: Novo Ciclo -->
+<div id="modal-new-cycle" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <h3>Abrir Novo Ciclo de Avaliação</h3>
+        <p class="modal-warn">Atenção: ao abrir um novo ciclo, todos os engenheiros poderão submeter uma nova avaliação.</p>
+        <div class="input-group">
+            <label>Nome do Ciclo</label>
+            <input type="text" id="new-cycle-name" placeholder="Ex: Q1 2025, Ciclo Março/2025">
+        </div>
+        <div id="modal-cycle-msg" class="auth-msg" style="display:none;"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('modal-new-cycle')">Cancelar</button>
+            <button class="btn-primary" style="max-width:180px;" onclick="doNewCycle()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Adicionar Competência -->
+<div id="modal-add-competency" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+        <h3>Adicionar Competência</h3>
+        <div class="input-group">
+            <label>Categoria</label>
+            <input type="text" id="new-comp-category" placeholder="Ex: Infrastructure">
+        </div>
+        <div class="input-group">
+            <label>Competência / Sub-categoria</label>
+            <input type="text" id="new-comp-subcategory" placeholder="Ex: Kubernetes (Containers, Pods)">
+        </div>
+        <div class="input-group">
+            <label>Link de Documentação (opcional)</label>
+            <input type="url" id="new-comp-docs" placeholder="https://...">
+        </div>
+        <div class="input-group">
+            <label>Target (0 a 3)</label>
+            <select id="new-comp-target">
+                <option value="0">0 — Não requerido</option>
+                <option value="1">1 — Pouca experiência</option>
+                <option value="2" selected>2 — Executa bem</option>
+                <option value="3">3 — Domina e ensina</option>
+            </select>
+        </div>
+        <div id="modal-comp-msg" class="auth-msg" style="display:none;"></div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('modal-add-competency')">Cancelar</button>
+            <button class="btn-primary" style="max-width:180px;" onclick="doAddCompetency()">Adicionar</button>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

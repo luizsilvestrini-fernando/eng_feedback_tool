@@ -1,0 +1,129 @@
+{
+	"info": {
+		"name": "Eng Feedback Tool API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Autenticação",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"luiz@otmow.com\",\n    \"password\": \"Altf1987tr@\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": "{{base_url}}/api/auth/login"
+					}
+				},
+				{
+					"name": "Me (Check Session)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api/auth/me"
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": "{{base_url}}/api/auth/logout"
+					}
+				}
+			]
+		},
+		{
+			"name": "Usuários",
+			"item": [
+				{
+					"name": "Listar Usuários",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api/users"
+					}
+				},
+				{
+					"name": "Criar Usuário",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"novo@otmow.com\",\n    \"role\": \"user\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": "{{base_url}}/api/users"
+					}
+				}
+			]
+		},
+		{
+			"name": "Feedbacks",
+			"item": [
+				{
+					"name": "Listar Feedbacks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api/feedbacks"
+					}
+				},
+				{
+					"name": "Baixar PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api/feedbacks/1/pdf"
+					}
+				}
+			]
+		},
+		{
+			"name": "Matriz de Competência",
+			"item": [
+				{
+					"name": "Get Matriz Atual",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "{{base_url}}/api/competencies"
+					}
+				},
+				{
+					"name": "Salvar Rascunho Scores",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"scores\": {\n        \"1\": 3,\n        \"2\": 2\n    }\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": "{{base_url}}/api/competencies/scores"
+					}
+				},
+				{
+					"name": "Submeter Definitivo",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": "{{base_url}}/api/competencies/submit"
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8080"
+		}
+	]
+}
