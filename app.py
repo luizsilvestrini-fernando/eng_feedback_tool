@@ -21,6 +21,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'otmow-dev-secret-mude-e
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=5)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+if os.environ.get('CLOUD_RUN', '0') == '1':
+    app.config['SESSION_COOKIE_SECURE'] = True
 
 ALLOWED_DOMAIN = '@otmow.com'
 ADMIN_EMAIL    = 'luiz@otmow.com'
@@ -74,6 +76,16 @@ def send_email(to, subject, body):
 @app.route('/')
 def serve_index():
     return send_from_directory('static', 'index.html')
+
+@app.route('/healthz')
+def health_check():
+    try:
+        conn = database.get_db_connection()
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "error": str(e)}), 503
 
 # ─── Autenticação ─────────────────────────────────────────────────────────────
 
@@ -405,7 +417,7 @@ def send_feedback_email(feedback_id):
     fb_dict['execution_blocks'] = json.loads(fb_dict.get('execution_blocks_json') or '[]')
 
     pdf_filename = f"feedback_{feedback_id}.pdf"
-    pdf_path     = os.path.join(os.path.dirname(__file__), pdf_filename)
+    pdf_path     = os.path.join('/tmp', pdf_filename)
     pdf_generator.generate_pdf(fb_dict, pdf_path)
 
     email_recipient = fb_dict.get('engineer_email')
@@ -476,7 +488,7 @@ def get_pdf(feedback_id):
     fb_dict['impacts']          = json.loads(fb_dict.get('impacts_json') or '[]')
     fb_dict['execution_blocks'] = json.loads(fb_dict.get('execution_blocks_json') or '[]')
 
-    temp_path = os.path.join(os.path.dirname(__file__), f"temp_dl_{feedback_id}.pdf")
+    temp_path = os.path.join('/tmp', f"temp_dl_{feedback_id}.pdf")
     pdf_generator.generate_pdf(fb_dict, temp_path)
     return send_file(temp_path, as_attachment=True, download_name=f"feedback_{fb_dict['engineer_name']}.pdf")
 
@@ -842,4 +854,5 @@ def seed_from_excel():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(host='0.0.0.0', port=8080, debug=debug)
